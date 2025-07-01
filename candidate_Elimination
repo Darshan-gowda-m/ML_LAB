@@ -1,0 +1,60 @@
+import pandas as pd
+
+def candidate_elimination(examples, target_attr):
+    S = examples[0][:-1]
+    G = [['?' for _ in range(len(S))]]
+
+    print("Initial Specific Hypothesis S:")
+    print(S)
+    print("Initial General Hypothesis G:")
+    print(G)
+    print("\n")
+
+    for i, example in enumerate(examples):
+        instance, target = example[:-1], example[-1]
+        print(f"--- Instance {i + 1} ---")
+        print("Instance:", instance, "Target:", target)
+
+        if target == target_attr:
+            # Positive Example
+            for j in range(len(S)):
+                if S[j] != instance[j]:
+                    S[j] = '?'
+            G = [g for g in G if all(g[k] == '?' or g[k] == S[k] for k in range(len(g)))]
+            print("Positive example encountered.")
+        else:
+            # Negative Example
+            new_G = []
+            print("Negative example encountered.")
+            for g in G:
+                if all(g[k] == '?' or g[k] == instance[k] for k in range(len(g))):
+                    for k in range(len(g)):
+                        if g[k] == '?':
+                            new_hypothesis = g.copy()
+                            new_hypothesis[k] = S[k]
+                            if new_hypothesis not in new_G:
+                                new_G.append(new_hypothesis)
+                else:
+                    new_G.append(g)
+            G = new_G
+
+        print("S:", S)
+        print("G:", G)
+        print("\n")
+
+    return S, G
+
+# Load Excel file
+df = pd.read_excel('training_data.xlsx')
+
+# Convert dataframe to list of lists
+data = df.values.tolist()
+
+# Run candidate elimination
+S_final, G_final = candidate_elimination(data, target_attr='Yes')
+
+print("===== Final Hypotheses =====")
+print("Final specific hypothesis S:")
+print(S_final)
+print("\nFinal general hypothesis G:")
+print(G_final)
