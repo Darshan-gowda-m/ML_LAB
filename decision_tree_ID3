@@ -1,0 +1,109 @@
+import pandas as pd
+import math
+from collections import Counter
+
+# ---------- Load Data ----------
+filename = 'training_data.xlsx'
+df = pd.read_excel(filename)
+features = list(df.columns[:-1])
+target = df.columns[-1]
+
+# ---------- Entropy ----------
+def entropy(data):
+    labels = data[target]
+    counts = Counter(labels)
+    total = len(labels)
+    return -sum((c / total) * math.log2(c / total) for c in counts.values() if c > 0)
+
+# ---------- Information Gain ----------
+def info_gain(data, attr):
+    total_entropy = entropy(data)
+    values = data[attr].unique()
+    weighted_entropy = 0
+    for val in values:
+        subset = data[data[attr] == val]
+        weighted_entropy += (len(subset) / len(data)) * entropy(subset)
+    return total_entropy - weighted_entropy
+
+# ---------- ID3 Recursive Tree Builder ----------
+def id3(data, features, depth=0):
+    indent = "│   " * depth
+    labels = data[target]
+
+    # Base case 1: All labels same
+    if len(set(labels)) == 1:
+        label = labels.iloc[0]
+        print(f"{indent}└── Leaf: {label}")
+        return label
+
+    # Base case 2: No more features
+    if not features:
+        majority = labels.mode()[0]
+        print(f"{indent}└── Leaf (majority): {majority}")
+        return majority
+
+    # Select best feature
+    gains = {feat: info_gain(data, feat) for feat in features}
+    best_feat = max(gains, key=gains.get)
+    print(f"{indent}├── Node: {best_feat} (Gain: {gains[best_feat]:.4f})")
+
+    tree = {best_feat: {}}
+    for val in data[best_feat].unique():
+        print(f"{indent}│   ├── If {best_feat} == {val}:")
+        subset = data[data[best_feat] == val]
+        if subset.empty:
+            majority = labels.mode()[0]
+            print(f"{indent}│   │   └── Leaf (empty): {majority}")
+            tree[best_feat][val] = majority
+        else:
+            remaining = [f for f in features if f != best_feat]
+            subtree = id3(subset, remaining, depth + 2)
+            tree[best_feat][val] = subtree
+    return tree
+
+# ---------- Classify Function ----------
+def classify(tree, instance):
+    if not isinstance(tree, dict):
+        return tree
+    attr = next(iter(tree))
+    value = instance.get(attr)
+    subtree = tree[attr].get(value)
+    if subtree is None:
+        return "Unknown"
+    return classify(subtree, instance)
+
+# ---------- Tree Depth ----------
+def tree_depth(tree):
+    if not isinstance(tree, dict):
+        return 0
+    attr = next(iter(tree))
+    return 1 + max(tree_depth(sub) for sub in tree[attr].values())
+
+# ---------- Accuracy ----------
+def compute_accuracy(tree, data):
+    correct = 0
+    for _, row in data.iterrows():
+        inst = row.to_dict()
+        if classify(tree, inst) == inst[target]:
+            correct += 1
+    return correct / len(data)
+
+# ---------- Main Execution ----------
+print("\n🌳 STEP-BY-STEP DECISION TREE BUILDING\n")
+tree = id3(df, features)
+
+# ---------- Tree Summary ----------
+depth = tree_depth(tree)
+accuracy = compute_accuracy(tree, df)
+print(f"\n📐 Final Tree Depth: {depth}")
+print(f"📊 Training Accuracy: {accuracy*100:.2f}%")
+
+# ---------- User Input ----------
+print("\n🧪 Enter values for a new instance to classify:")
+user_instance = {}
+for feat in features:
+    user_instance[feat] = input(f"{feat}: ")
+
+# ---------- Prediction ----------
+result = classify(tree, user_instance)
+print("\n🔮 Prediction for your instance:", result)
