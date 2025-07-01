@@ -58,3 +58,55 @@ print("Final specific hypothesis S:")
 print(S_final)
 print("\nFinal general hypothesis G:")
 print(G_final)
+
+
+
+
+
+
+
+
+
+
+
+OUPUT
+Initial Specific Hypothesis S:
+['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same']
+Initial General Hypothesis G:
+[['?', '?', '?', '?', '?', '?']]
+
+
+--- Instance 1 ---
+Instance: ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same'] Target: Yes
+Positive example encountered.
+S: ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same']
+G: [['?', '?', '?', '?', '?', '?']]
+
+
+--- Instance 2 ---
+Instance: ['Sunny', 'Warm', 'High', 'Strong', 'Warm', 'Same'] Target: Yes
+Positive example encountered.
+S: ['Sunny', 'Warm', '?', 'Strong', 'Warm', 'Same']
+G: [['?', '?', '?', '?', '?', '?']]
+
+
+--- Instance 3 ---
+Instance: ['Rainy', 'Cold', 'High', 'Strong', 'Warm', 'Change'] Target: No
+Negative example encountered.
+S: ['Sunny', 'Warm', '?', 'Strong', 'Warm', 'Same']
+G: [['Sunny', '?', '?', '?', '?', '?'], ['?', 'Warm', '?', '?', '?', '?'], ['?', '?', '?', '?', '?', '?'], ['?', '?', '?', 'Strong', '?', '?'], ['?', '?', '?', '?', 'Warm', '?'], ['?', '?', '?', '?', '?', 'Same']]
+
+
+--- Instance 4 ---
+Instance: ['Sunny', 'Warm', 'High', 'Strong', 'Cool', 'Change'] Target: Yes
+Positive example encountered.
+S: ['Sunny', 'Warm', '?', 'Strong', '?', '?']
+G: [['Sunny', '?', '?', '?', '?', '?'], ['?', 'Warm', '?', '?', '?', '?'], ['?', '?', '?', '?', '?', '?'], ['?', '?', '?', 'Strong', '?', '?']]
+
+
+===== Final Hypotheses =====
+Final specific hypothesis S:
+['Sunny', 'Warm', '?', 'Strong', '?', '?']
+
+Final general hypothesis G:
+[['Sunny', '?', '?', '?', '?', '?'], ['?', 'Warm', '?', '?', '?', '?'], ['?', '?', '?', '?', '?', '?'], ['?', '?', '?', 'Strong', '?', '?']]
