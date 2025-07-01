@@ -1,1 +1,40 @@
+import pandas as pd
+
+def find_s_algorithm(examples):
+    hypothesis = ['0'] * len(examples[0][0])
+    step = 1
+    print(f"Initial Hypothesis: {hypothesis}")
+    
+    for instance, label in examples:
+        if label == 'Yes':
+            print(f"\nStep {step}: Positive example: {instance}")
+            if hypothesis == ['0'] * len(hypothesis):
+                hypothesis = instance.copy()
+                print(f"First positive example, setting hypothesis to: {hypothesis}")
+            else:
+                for i in range(len(hypothesis)):
+                    if hypothesis[i] != instance[i]:
+                        hypothesis[i] = '?'
+                print(f"Updated Hypothesis: {hypothesis}")
+            step += 1
+        else:
+            print(f"\nSkipping negative example: {instance}")
+    
+    return hypothesis
+
+
+# Step 1: Read from Excel file
+df = pd.read_excel("training_data.xlsx")  # Ensure the file is in the same directory
+
+# Step 2: Convert to (features, label) format
+data = []
+for index, row in df.iterrows():
+    features = row.iloc[:-1].tolist()   # Use iloc to get all columns except last
+    label = row.iloc[-1]                # Use iloc to safely get the last column
+    data.append((features, label))
+
+# Step 3: Run Find-S
+hypothesis = find_s_algorithm(data)
+
+print("Final Hypothesis:", hypothesis)
 
