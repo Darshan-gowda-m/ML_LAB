@@ -22,53 +22,17 @@ def find_s_algorithm(examples):
     
     return hypothesis
 
-
-# Step 1: Read from Excel file
-df = pd.read_excel("training_data.xlsx")  # Ensure the file is in the same directory
+# Step 1: Read from CSV file
+df = pd.read_csv("training_data.csv")  # Make sure this file exists in the same directory
 
 # Step 2: Convert to (features, label) format
 data = []
 for index, row in df.iterrows():
-    features = row.iloc[:-1].tolist()   # Use iloc to get all columns except last
-    label = row.iloc[-1]                # Use iloc to safely get the last column
+    features = row.iloc[:-1].tolist()   # all columns except last
+    label = row.iloc[-1]                # last column is the label
     data.append((features, label))
 
 # Step 3: Run Find-S
 hypothesis = find_s_algorithm(data)
 
 print("Final Hypothesis:", hypothesis)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-OUTPUT
-Initial Hypothesis: ['0', '0', '0', '0', '0', '0']
-
-Step 1: Positive example: ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same']
-First positive example, setting hypothesis to: ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same']
-
-Step 2: Positive example: ['Sunny', 'Warm', 'High', 'Strong', 'Warm', 'Same']
-Updated Hypothesis: ['Sunny', 'Warm', '?', 'Strong', 'Warm', 'Same']
-
-Skipping negative example: ['Rainy', 'Cold', 'High', 'Strong', 'Warm', 'Change']
-
-Step 3: Positive example: ['Sunny', 'Warm', 'High', 'Strong', 'Cool', 'Change']
-Updated Hypothesis: ['Sunny', 'Warm', '?', 'Strong', '?', '?']
-Final Hypothesis: ['Sunny', 'Warm', '?', 'Strong', '?', '?']
