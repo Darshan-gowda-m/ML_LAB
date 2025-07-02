@@ -1,0 +1,97 @@
+import random
+import math
+
+# Sigmoid and its derivative
+def sigmoid(x):
+    return 1.0 / (1.0 + math.exp(-x))
+
+def sigmoid_derivative(output):
+    return output * (1.0 - output)
+
+# Initialize a network
+def initialize_network(n_inputs, n_hidden, n_outputs):
+    network = []
+    hidden_layer = [{'weights': [random.uniform(-1, 1) for _ in range(n_inputs + 1)]} for _ in range(n_hidden)]
+    output_layer = [{'weights': [random.uniform(-1, 1) for _ in range(n_hidden + 1)]} for _ in range(n_outputs)]
+    network.append(hidden_layer)
+    network.append(output_layer)
+    return network
+
+# Forward propagate input to a network output
+def forward_propagate(network, row):
+    inputs = row
+    for layer in network:
+        new_inputs = []
+        for neuron in layer:
+            activation = neuron['weights'][-1]  # bias
+            for i in range(len(neuron['weights']) - 1):
+                activation += neuron['weights'][i] * inputs[i]
+            neuron['output'] = sigmoid(activation)
+            new_inputs.append(neuron['output'])
+        inputs = new_inputs
+    return inputs
+
+# Backward propagate error and store in neurons
+def backward_propagate_error(network, expected):
+    for i in reversed(range(len(network))):
+        layer = network[i]
+        errors = []
+        if i != len(network)-1:  # hidden layer
+            for j in range(len(layer)):
+                error = sum([neuron['weights'][j] * neuron['delta'] for neuron in network[i + 1]])
+                errors.append(error)
+        else:  # output layer
+            for j in range(len(layer)):
+                neuron = layer[j]
+                errors.append(expected[j] - neuron['output'])
+        for j in range(len(layer)):
+            neuron = layer[j]
+            neuron['delta'] = errors[j] * sigmoid_derivative(neuron['output'])
+
+# Update network weights with error
+def update_weights(network, row, lrate):
+    inputs = row[:-1]
+    for i in range(len(network)):
+        if i != 0:
+            inputs = [neuron['output'] for neuron in network[i - 1]]
+        for neuron in network[i]:
+            for j in range(len(inputs)):
+                neuron['weights'][j] += lrate * neuron['delta'] * inputs[j]
+            neuron['weights'][-1] += lrate * neuron['delta']
+
+# Train the network
+def train_network(network, train, lrate, n_epoch, n_outputs):
+    for epoch in range(n_epoch):
+        sum_error = 0
+        for row in train:
+            outputs = forward_propagate(network, row)
+            expected = [0 for _ in range(n_outputs)]
+            expected[int(row[-1])] = 1
+            sum_error += sum((expected[i] - outputs[i])**2 for i in range(len(expected)))
+            backward_propagate_error(network, expected)
+            update_weights(network, row, lrate)
+        print(f'>epoch={epoch}, lrate={lrate:.3f}, error={sum_error:.3f}')
+
+# Print the final network state
+def print_network(network):
+    for layer in network:
+        print([{
+            'weights': neuron['weights'],
+            'output': neuron['output'],
+            'delta': neuron['delta']
+        } for neuron in layer])
+
+# Example dataset: XOR
+dataset = [
+    [0, 0, 0],
+    [0, 1, 1],
+    [1, 0, 1],
+    [1, 1, 0]
+]
+
+# Set up and run
+n_inputs = len(dataset[0]) - 1
+n_outputs = 2  # binary classification as one-hot
+network = initialize_network(n_inputs, 2, n_outputs)
+train_network(network, dataset, lrate=0.5, n_epoch=20, n_outputs=n_outputs)
+print_network(network)
