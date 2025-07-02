@@ -44,8 +44,8 @@ def candidate_elimination(examples, target_attr):
 
     return S, G
 
-# Load Excel file
-df = pd.read_excel('training_data.xlsx')
+# Load CSV file instead of Excel
+df = pd.read_csv('training_data.csv')  # Make sure this file exists in the same folder
 
 # Convert dataframe to list of lists
 data = df.values.tolist()
@@ -69,8 +69,24 @@ print(G_final)
 
 
 
-OUPUT
-Initial Specific Hypothesis S:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUTPUT Initial Specific Hypothesis S:
 ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same']
 Initial General Hypothesis G:
 [['?', '?', '?', '?', '?', '?']]
@@ -110,3 +126,19 @@ Final specific hypothesis S:
 
 Final general hypothesis G:
 [['Sunny', '?', '?', '?', '?', '?'], ['?', 'Warm', '?', '?', '?', '?'], ['?', '?', '?', '?', '?', '?'], ['?', '?', '?', 'Strong', '?', '?']]
+
+
+
+
+
+
+
+
+
+
+training_data.csv
+Outlook,Temperature,Humidity,Wind,Water,Forecast,EnjoySport
+Sunny,Warm,Normal,Strong,Warm,Same,Yes
+Sunny,Warm,High,Strong,Warm,Same,Yes
+Rainy,Cold,High,Strong,Warm,Change,No
+Sunny,Warm,High,Strong,Cool,Change,Yes
