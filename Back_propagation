@@ -1,23 +1,20 @@
-import random
 import math
+import random
 
-# Sigmoid and its derivative
+# --- Sigmoid and derivative ---
 def sigmoid(x):
     return 1.0 / (1.0 + math.exp(-x))
 
 def sigmoid_derivative(output):
     return output * (1.0 - output)
 
-# Initialize a network
+# --- Initialize network ---
 def initialize_network(n_inputs, n_hidden, n_outputs):
-    network = []
     hidden_layer = [{'weights': [random.uniform(-1, 1) for _ in range(n_inputs + 1)]} for _ in range(n_hidden)]
     output_layer = [{'weights': [random.uniform(-1, 1) for _ in range(n_hidden + 1)]} for _ in range(n_outputs)]
-    network.append(hidden_layer)
-    network.append(output_layer)
-    return network
+    return [hidden_layer, output_layer]
 
-# Forward propagate input to a network output
+# --- Forward propagate ---
 def forward_propagate(network, row):
     inputs = row
     for layer in network:
@@ -31,67 +28,151 @@ def forward_propagate(network, row):
         inputs = new_inputs
     return inputs
 
-# Backward propagate error and store in neurons
+# --- Backpropagation ---
 def backward_propagate_error(network, expected):
     for i in reversed(range(len(network))):
         layer = network[i]
         errors = []
-        if i != len(network)-1:  # hidden layer
-            for j in range(len(layer)):
-                error = sum([neuron['weights'][j] * neuron['delta'] for neuron in network[i + 1]])
+        if i == len(network) - 1:  # output layer
+            for j, neuron in enumerate(layer):
+                error = expected[j] - neuron['output']
                 errors.append(error)
-        else:  # output layer
-            for j in range(len(layer)):
-                neuron = layer[j]
-                errors.append(expected[j] - neuron['output'])
-        for j in range(len(layer)):
-            neuron = layer[j]
+        else:
+            for j, neuron in enumerate(layer):
+                error = sum(next_neuron['weights'][j] * next_neuron['delta'] for next_neuron in network[i + 1])
+                errors.append(error)
+        for j, neuron in enumerate(layer):
             neuron['delta'] = errors[j] * sigmoid_derivative(neuron['output'])
 
-# Update network weights with error
-def update_weights(network, row, lrate):
-    inputs = row[:-1]
+# --- Update weights ---
+def update_weights(network, row, l_rate):
     for i in range(len(network)):
-        if i != 0:
-            inputs = [neuron['output'] for neuron in network[i - 1]]
+        inputs = row[:-1] if i == 0 else [neuron['output'] for neuron in network[i - 1]]
         for neuron in network[i]:
             for j in range(len(inputs)):
-                neuron['weights'][j] += lrate * neuron['delta'] * inputs[j]
-            neuron['weights'][-1] += lrate * neuron['delta']
+                neuron['weights'][j] += l_rate * neuron['delta'] * inputs[j]
+            neuron['weights'][-1] += l_rate * neuron['delta']  # bias
 
-# Train the network
-def train_network(network, train, lrate, n_epoch, n_outputs):
+# --- Training ---
+def train_network(network, train, l_rate, n_epoch, n_outputs):
     for epoch in range(n_epoch):
         sum_error = 0
         for row in train:
             outputs = forward_propagate(network, row)
-            expected = [0 for _ in range(n_outputs)]
+            expected = [0] * n_outputs
             expected[int(row[-1])] = 1
-            sum_error += sum((expected[i] - outputs[i])**2 for i in range(len(expected)))
+            sum_error += sum((expected[i] - outputs[i])**2 for i in range(n_outputs))
             backward_propagate_error(network, expected)
-            update_weights(network, row, lrate)
-        print(f'>epoch={epoch}, lrate={lrate:.3f}, error={sum_error:.3f}')
+            update_weights(network, row, l_rate)
+        if epoch % 500 == 0:
+            print(f">epoch={epoch}, lrate={l_rate:.3f}, error={sum_error:.4f}")
 
-# Print the final network state
+# --- Predict ---
+def predict(network, row):
+    outputs = forward_propagate(network, row)
+    return outputs.index(max(outputs))
+
+# --- Evaluate accuracy ---
+def evaluate(network, test):
+    correct = 0
+    for row in test:
+        prediction = predict(network, row)
+        if prediction == int(row[-1]):
+            correct += 1
+    accuracy = correct / len(test) * 100
+    print(f"\n✅ Test Accuracy: {accuracy:.2f}%")
+
+# --- Print final network state ---
 def print_network(network):
-    for layer in network:
-        print([{
-            'weights': neuron['weights'],
-            'output': neuron['output'],
-            'delta': neuron['delta']
-        } for neuron in layer])
+    print("\n📘 Final Network State:")
+    for i, layer in enumerate(network):
+        print(f" Layer {i+1}:")
+        for neuron in layer:
+            print({
+                'weights': [round(w, 4) for w in neuron['weights']],
+                'output': round(neuron['output'], 4),
+                'delta': round(neuron['delta'], 4)
+            })
 
-# Example dataset: XOR
-dataset = [
+
+# XOR dataset
+train_data = [
     [0, 0, 0],
     [0, 1, 1],
     [1, 0, 1],
     [1, 1, 0]
 ]
 
-# Set up and run
-n_inputs = len(dataset[0]) - 1
-n_outputs = 2  # binary classification as one-hot
-network = initialize_network(n_inputs, 2, n_outputs)
-train_network(network, dataset, lrate=0.5, n_epoch=20, n_outputs=n_outputs)
+# Same as training here (can use different test data)
+test_data = train_data
+
+n_inputs = len(train_data[0]) - 1
+n_outputs = 2  # binary: class 0 or 1
+
+# Build and train network
+network = initialize_network(n_inputs, n_hidden=4, n_outputs=n_outputs)
+train_network(network, train_data, l_rate=0.5, n_epoch=10000, n_outputs=n_outputs)
+
+# Print final state
 print_network(network)
+
+# Evaluate
+evaluate(network, test_data)
+
+# Predict custom input
+print("\n🔮 Enter two binary inputs to predict (0 or 1):")
+a = int(input("Input 1: "))
+b = int(input("Input 2: "))
+result = predict(network, [a, b])
+print(f"🧠 Predicted class: {result}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+OUPUT
+epoch=0, lrate=0.500, error=2.3848
+>epoch=500, lrate=0.500, error=0.2409
+>epoch=1000, lrate=0.500, error=0.0400
+>epoch=1500, lrate=0.500, error=0.0204
+>epoch=2000, lrate=0.500, error=0.0135
+>epoch=2500, lrate=0.500, error=0.0100
+>epoch=3000, lrate=0.500, error=0.0079
+>epoch=3500, lrate=0.500, error=0.0065
+>epoch=4000, lrate=0.500, error=0.0056
+>epoch=4500, lrate=0.500, error=0.0048
+>epoch=5000, lrate=0.500, error=0.0043
+>epoch=5500, lrate=0.500, error=0.0038
+>epoch=6000, lrate=0.500, error=0.0035
+>epoch=6500, lrate=0.500, error=0.0032
+>epoch=7000, lrate=0.500, error=0.0029
+>epoch=7500, lrate=0.500, error=0.0027
+>epoch=8000, lrate=0.500, error=0.0025
+>epoch=8500, lrate=0.500, error=0.0023
+>epoch=9000, lrate=0.500, error=0.0022
+>epoch=9500, lrate=0.500, error=0.0021
+
+📘 Final Network State:
+ Layer 1:
+{'weights': [-7.2456, 6.074, -2.9448], 'output': 0.016, 'delta': -0.0001}
+{'weights': [0.2337, -0.9699, -0.6421], 'output': 0.2013, 'delta': -0.0001}
+{'weights': [-3.3333, -3.1782, 0.2394], 'output': 0.0019, 'delta': 0.0}
+{'weights': [-6.4841, 7.5804, 3.0296], 'output': 0.9841, 'delta': 0.0001}
+ Layer 2:
+{'weights': [-8.9571, -0.9571, 2.2235, 8.4792, -4.0239], 'output': 0.9818, 'delta': 0.0003}
+{'weights': [8.9306, 0.7628, -2.2554, -8.4917, 4.0929], 'output': 0.0185, 'delta': -0.0003}
+
+✅ Test Accuracy: 100.00%
+
+🔮 Enter two binary inputs to predict (0 or 1):
+Input 1:  1
+Input 2:  0
+🧠 Predicted class: 1
