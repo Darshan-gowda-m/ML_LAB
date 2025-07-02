@@ -2,108 +2,163 @@ import pandas as pd
 import math
 from collections import Counter
 
-# ---------- Load Data ----------
-filename = 'training_data.xlsx'
-df = pd.read_excel(filename)
+# Load dataset
+df = pd.read_csv('training_data.csv')
 features = list(df.columns[:-1])
 target = df.columns[-1]
 
-# ---------- Entropy ----------
+# Entropy function
 def entropy(data):
     labels = data[target]
-    counts = Counter(labels)
     total = len(labels)
-    return -sum((c / total) * math.log2(c / total) for c in counts.values() if c > 0)
+    counts = Counter(labels)
+    return -sum((c/total) * math.log2(c/total) for c in counts.values() if c > 0)
 
-# ---------- Information Gain ----------
+# Information gain
 def info_gain(data, attr):
     total_entropy = entropy(data)
     values = data[attr].unique()
-    weighted_entropy = 0
-    for val in values:
-        subset = data[data[attr] == val]
-        weighted_entropy += (len(subset) / len(data)) * entropy(subset)
+    weighted_entropy = sum((len(data[data[attr]==v])/len(data)) * entropy(data[data[attr]==v]) for v in values)
     return total_entropy - weighted_entropy
 
-# ---------- ID3 Recursive Tree Builder ----------
+# ID3 tree builder
 def id3(data, features, depth=0):
-    indent = "│   " * depth
     labels = data[target]
-
-    # Base case 1: All labels same
     if len(set(labels)) == 1:
-        label = labels.iloc[0]
-        print(f"{indent}└── Leaf: {label}")
-        return label
-
-    # Base case 2: No more features
+        return labels.iloc[0]
     if not features:
-        majority = labels.mode()[0]
-        print(f"{indent}└── Leaf (majority): {majority}")
-        return majority
+        return labels.mode()[0]
 
-    # Select best feature
-    gains = {feat: info_gain(data, feat) for feat in features}
-    best_feat = max(gains, key=gains.get)
-    print(f"{indent}├── Node: {best_feat} (Gain: {gains[best_feat]:.4f})")
-
-    tree = {best_feat: {}}
-    for val in data[best_feat].unique():
-        print(f"{indent}│   ├── If {best_feat} == {val}:")
-        subset = data[data[best_feat] == val]
+    gains = {f: info_gain(data, f) for f in features}
+    best = max(gains, key=gains.get)
+    
+    tree = {best: {}}
+    for val in data[best].unique():
+        subset = data[data[best] == val]
         if subset.empty:
-            majority = labels.mode()[0]
-            print(f"{indent}│   │   └── Leaf (empty): {majority}")
-            tree[best_feat][val] = majority
+            tree[best][val] = labels.mode()[0]
         else:
-            remaining = [f for f in features if f != best_feat]
-            subtree = id3(subset, remaining, depth + 2)
-            tree[best_feat][val] = subtree
+            tree[best][val] = id3(subset, [f for f in features if f != best], depth + 1)
     return tree
 
-# ---------- Classify Function ----------
-def classify(tree, instance):
+# Pretty print tree diagram
+def print_tree(tree, indent=""):
+    if not isinstance(tree, dict):
+        print(indent + "→ " + str(tree))
+        return
+    for attr, branches in tree.items():
+        print(indent + f"[{attr}]")
+        for val, subtree in branches.items():
+            print(indent + f"├── {val}")
+            print_tree(subtree, indent + "│   ")
+
+# Classify new sample
+def classify(tree, sample):
     if not isinstance(tree, dict):
         return tree
     attr = next(iter(tree))
-    value = instance.get(attr)
+    value = sample.get(attr)
     subtree = tree[attr].get(value)
     if subtree is None:
         return "Unknown"
-    return classify(subtree, instance)
+    return classify(subtree, sample)
 
-# ---------- Tree Depth ----------
-def tree_depth(tree):
-    if not isinstance(tree, dict):
-        return 0
-    attr = next(iter(tree))
-    return 1 + max(tree_depth(sub) for sub in tree[attr].values())
-
-# ---------- Accuracy ----------
+# Accuracy calculation
 def compute_accuracy(tree, data):
     correct = 0
     for _, row in data.iterrows():
-        inst = row.to_dict()
-        if classify(tree, inst) == inst[target]:
+        sample = row.to_dict()
+        actual = sample[target]
+        predicted = classify(tree, sample)
+        if predicted == actual:
             correct += 1
     return correct / len(data)
 
-# ---------- Main Execution ----------
-print("\n🌳 STEP-BY-STEP DECISION TREE BUILDING\n")
+# Main execution
+print("🔍 Building Decision Tree using ID3 Algorithm...\n")
 tree = id3(df, features)
 
-# ---------- Tree Summary ----------
-depth = tree_depth(tree)
+print("📘 Decision Tree Structure:")
+print_tree(tree)
+
 accuracy = compute_accuracy(tree, df)
-print(f"\n📐 Final Tree Depth: {depth}")
-print(f"📊 Training Accuracy: {accuracy*100:.2f}%")
+print(f"\n✅ Training Accuracy: {accuracy*100:.2f}%")
 
-# ---------- User Input ----------
-print("\n🧪 Enter values for a new instance to classify:")
-user_instance = {}
-for feat in features:
-    user_instance[feat] = input(f"{feat}: ")
+# User input to classify
+print("\n🧪 Enter values for a new sample to classify:")
+new_sample = {}
+for f in features:
+    new_sample[f] = input(f"{f}: ")
 
-# ---------- Prediction ----------
-result = classify(tree, user_instance)
-print("\n🔮 Prediction for your instance:", result)
+prediction = classify(tree, new_sample)
+print(f"\n🔮 Predicted Class: {prediction}")
+
+
+
+
+
+
+
+
+
+
+
+output
+🔍 Building Decision Tree using ID3 Algorithm...
+
+📘 Decision Tree Structure:
+[Outlook]
+├── Sunny
+│   [Temperature]
+│   ├── Warm
+│   │   [Humidity]
+│   │   ├── Normal
+│   │   │   → Yes
+│   │   ├── High
+│   │   │   [Wind]
+│   │   │   ├── Strong
+│   │   │   │   [Water]
+│   │   │   │   ├── Warm
+│   │   │   │   │   → No
+│   │   │   │   ├── Cool
+│   │   │   │   │   → Yes
+│   │   │   ├── Weak
+│   │   │   │   → No
+│   ├── Hot
+│   │   → Yes
+│   ├── Cold
+│   │   → Yes
+├── Rainy
+│   → No
+├── Overcast
+│   → Yes
+
+✅ Training Accuracy: 100.00%
+
+🧪 Enter values for a new sample to classify:
+Outlook:  Sunny
+Temperature:  Hot
+Humidity:  Normal
+Wind:  Strong
+Water:  Cool
+Forecast:  Same
+
+🔮 Predicted Class: Yes
+
+
+training_data.csv
+Outlook,Temperature,Humidity,Wind,Water,Forecast,EnjoySport
+Sunny,Warm,Normal,Strong,Warm,Same,Yes
+Sunny,Warm,High,Strong,Warm,Same,No
+Rainy,Cold,High,Strong,Warm,Change,No
+Sunny,Warm,High,Strong,Cool,Change,Yes
+Overcast,Hot,High,Weak,Cool,Same,Yes
+Rainy,Warm,Normal,Weak,Warm,Change,No
+Sunny,Hot,Normal,Strong,Warm,Same,Yes
+Rainy,Warm,High,Strong,Cool,Change,No
+Overcast,Warm,Normal,Weak,Warm,Same,Yes
+Sunny,Cold,Normal,Weak,Cool,Same,Yes
+Rainy,Hot,High,Strong,Warm,Change,No
+Sunny,Hot,High,Weak,Warm,Change,Yes
+Sunny,Warm,High,Weak,Cool,Change,No
+
