@@ -1,0 +1,109 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import (accuracy_score, precision_score, 
+                             recall_score, f1_score, confusion_matrix,
+                             classification_report)
+import os
+
+class AdvancedNaiveBayesClassifier:
+    def __init__(self):
+        self.vectorizer = CountVectorizer(stop_words='english', max_features=5000)
+        self.model = MultinomialNB()
+
+    def write_sample_dataset(self, filepath='train.csv'):
+        """Write a sample SMS dataset to train.csv"""
+        sample_data = [
+            ['ham', "Hey, are we still on for dinner tonight?"],
+            ['spam', "WINNER! You have won a free cruise. Call now!"],
+            ['ham', "I'll call you back in 10 minutes."],
+            ['spam', "URGENT! Your account has been suspended. Click to verify."],
+            ['ham', "Don't forget about the meeting at 3 PM."],
+            ['spam', "Free entry in 2 a wkly comp to win FA Cup final tkts 21st May"],
+            ['ham', "Lunch tomorrow?"],
+            ['spam', "Claim your free ringtone now by texting WIN to 80085"],
+            ['ham', "Can you send me the report before noon?"],
+            ['spam', "Congratulations! You've been selected for a $1000 Walmart gift card."]
+        ]
+        df = pd.DataFrame(sample_data, columns=['label', 'text'])
+        df.to_csv(filepath, index=False, header=False)
+        print(f"Sample dataset written to {filepath}")
+
+    def load_data(self, filepath):
+        """Load and preprocess the dataset"""
+        df = pd.read_csv(filepath, header=None, names=['label', 'text'])
+        df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+        return df['text'].values, df['label'].values
+
+    def train_evaluate(self, X, y, test_size=0.3, random_state=42):
+        """Complete training and evaluation pipeline"""
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=random_state
+        )
+
+        X_train_vec = self.vectorizer.fit_transform(X_train)
+        X_test_vec = self.vectorizer.transform(X_test)
+
+        self.model.fit(X_train_vec, y_train)
+        y_pred = self.model.predict(X_test_vec)
+
+        self._print_metrics(y_test, y_pred)
+        self._print_confusion_matrix(y_test, y_pred)
+
+        return X_test, y_test, y_pred
+
+    def _print_metrics(self, y_true, y_pred):
+        print("\n=== Model Evaluation Metrics ===")
+        print(f"Accuracy:  {accuracy_score(y_true, y_pred):.4f}")
+        print(f"Precision: {precision_score(y_true, y_pred):.4f}")
+        print(f"Recall:    {recall_score(y_true, y_pred):.4f}")
+        print(f"F1 Score:  {f1_score(y_true, y_pred):.4f}")
+
+        print("\n=== Classification Report ===")
+        print(classification_report(y_true, y_pred, target_names=['ham', 'spam']))
+
+    def _print_confusion_matrix(self, y_true, y_pred):
+        cm = confusion_matrix(y_true, y_pred)
+        print("\n=== Confusion Matrix ===")
+        print(f"True Negatives (Ham):         {cm[0,0]}")
+        print(f"False Positives (Ham→Spam):   {cm[0,1]}")
+        print(f"False Negatives (Spam→Ham):   {cm[1,0]}")
+        print(f"True Positives (Spam):        {cm[1,1]}")
+
+    def predict_examples(self, examples):
+        """Predict class for new examples"""
+        vec = self.vectorizer.transform(examples)
+        preds = self.model.predict(vec)
+        return ['spam' if p == 1 else 'ham' for p in preds]
+
+
+# Main execution
+if __name__ == "__main__":
+    nb = AdvancedNaiveBayesClassifier()
+
+    # Write sample data to train.csv
+    nb.write_sample_dataset('train.csv')
+
+    # Load data
+    X, y = nb.load_data('train.csv')
+
+    # Train and evaluate
+    X_test, y_test, y_pred = nb.train_evaluate(X, y)
+
+    # Predict new messages
+    test_messages = [
+        "Your loan is approved! Call now to claim.",
+        "Hi, just checking in to see how you're doing.",
+        "Don't miss out on this limited-time offer!",
+        "Are you joining the office call at 2 PM?"
+    ]
+    predictions = nb.predict_examples(test_messages)
+
+    print("\n=== Test Message Predictions ===")
+    for msg, pred in zip(test_messages, predictions):
+        print(f"'{msg[:50]}...' => {pred}")
+
+    print(f"\nVocabulary size: {len(nb.vectorizer.vocabulary_)}")
+    print("Sample features:", list(nb.vectorizer.vocabulary_.items())[:10])
