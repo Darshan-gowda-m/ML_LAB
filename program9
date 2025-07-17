@@ -1,0 +1,38 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def locally_weighted_regression(x, y, query_x, tau=0.5):
+    """Performs Locally Weighted Regression at a query point."""
+    m = len(x)
+    X = np.c_[np.ones(m), x]  # Add intercept
+    X_query = np.array([1, query_x])
+    
+    # Weight matrix using Gaussian kernel
+    W = np.exp(-((x - query_x) ** 2) / (2 * tau ** 2))
+    W = np.diag(W)
+    
+    # θ = (X^T W X)^(-1) X^T W y
+    theta = np.linalg.pinv(X.T @ W @ X) @ X.T @ W @ y
+    prediction = X_query @ theta
+    return prediction
+
+# === Generate synthetic dataset ===
+np.random.seed(0)
+x = np.linspace(0, 10, 100)
+y = np.sin(x) + 0.3 * np.random.randn(100)
+
+# === Predict using LWR ===
+x_query = np.linspace(0, 10, 300)
+y_pred = np.array([locally_weighted_regression(x, y, x0, tau=0.3) for x0 in x_query])
+
+# === Plot results ===
+plt.figure(figsize=(10, 6))
+plt.scatter(x, y, label='Training data', color='lightblue')
+plt.plot(x_query, y_pred, label='Locally Weighted Regression', color='red', linewidth=2)
+plt.title("Non-Parametric Locally Weighted Regression (LWR)")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
