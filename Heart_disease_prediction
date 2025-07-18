@@ -86,3 +86,44 @@ while True:
     again = input("Test another input? (y/n): ")
     if again.lower() != 'y':
         break
+
+
+
+
+
+
+OUTPUT
+
+========================= Evaluation =========================
+Accuracy: 1.00
+
+Classification Report:
+                  precision    recall  f1-score   support
+
+HeartDisease-Yes       1.00      1.00      1.00         2
+ HeartDisease-No       1.00      1.00      1.00         1
+
+        accuracy                           1.00         3
+       macro avg       1.00      1.00      1.00         3
+    weighted avg       1.00      1.00      1.00         3
+
+Confusion Matrix:
+[[2 0]
+ [0 1]]
+
+========================= Predictions =========================
+Input: [0 1 0 1 3 0] | Predicted: Yes | Actual: Yes ✅ Correct
+Input: [1 1 0 1 2 0] | Predicted: Yes | Actual: Yes ✅ Correct
+Input: [4 1 1 2 3 2] | Predicted: No | Actual: No ✅ Correct
+
+---------- Check Your Risk for Heart Disease ----------
+Enter Age {'SuperSeniorCitizen': 0, 'SeniorCitizen': 1, 'MiddleAged': 2, 'Youth': 3, 'Teen': 4}:  0
+Enter Gender {'Male': 0, 'Female': 1}:  1
+Family History {'Yes': 0, 'No': 1}:  0
+Diet {'High': 0, 'Medium': 1, 'Low': 2}:  0
+Lifestyle {'Athlete': 0, 'Active': 1, 'Moderate': 2, 'Sedentary': 3}:  2
+Cholesterol {'High': 0, 'BorderLine': 1, 'Normal': 2}:  0
+
+No Heart Disease Probability: 0.16
+Yes Heart Disease Probability: 0.84
+Final Prediction: Yes
