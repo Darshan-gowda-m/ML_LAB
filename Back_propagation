@@ -1,5 +1,6 @@
 import random
 import math
+from sklearn.model_selection import train_test_split
 
 class SimpleNeuralNetwork:
     def __init__(self, n_inputs, n_hidden, n_outputs):
@@ -17,40 +18,40 @@ class SimpleNeuralNetwork:
             new_inputs = []
             for neuron in layer:
                 activation = neuron['weights'][-1]  # bias
-                for i in range(len(neuron['weights'])-1):
+                for i in range(len(neuron['weights']) - 1):
                     activation += neuron['weights'][i] * inputs[i]
                 neuron['output'] = self.sigmoid(activation)
                 new_inputs.append(neuron['output'])
             inputs = new_inputs
         return inputs
-    
+
     def backward_propagate_error(self, expected):
         for i in reversed(range(len(self.network))):
             layer = self.network[i]
             errors = []
-            if i == len(self.network)-1:
+            if i == len(self.network) - 1:
                 for j in range(len(layer)):
                     neuron = layer[j]
                     errors.append(expected[j] - neuron['output'])
             else:
                 for j in range(len(layer)):
                     error = 0.0
-                    for neuron in self.network[i+1]:
-                        error += (neuron['weights'][j] * neuron['delta'])
+                    for neuron in self.network[i + 1]:
+                        error += neuron['weights'][j] * neuron['delta']
                     errors.append(error)
             for j in range(len(layer)):
                 neuron = layer[j]
                 neuron['delta'] = errors[j] * neuron['output'] * (1 - neuron['output'])
-    
+
     def update_weights(self, inputs, lrate):
         for i in range(len(self.network)):
             if i != 0:
-                inputs = [neuron['output'] for neuron in self.network[i-1]]
+                inputs = [neuron['output'] for neuron in self.network[i - 1]]
             for neuron in self.network[i]:
                 for j in range(len(inputs)):
                     neuron['weights'][j] += lrate * neuron['delta'] * inputs[j]
                 neuron['weights'][-1] += lrate * neuron['delta']  # bias
-    
+
     def train(self, train_data, lrate, n_epoch):
         for epoch in range(n_epoch):
             sum_error = 0
@@ -58,58 +59,68 @@ class SimpleNeuralNetwork:
                 inputs = row[:-1]
                 expected = row[-1]
                 outputs = self.forward_propagate(inputs)
-                sum_error += sum([(expected[i]-outputs[i])**2 for i in range(len(expected))])
+                sum_error += sum([(expected[i] - outputs[i]) ** 2 for i in range(len(expected))])
                 self.backward_propagate_error(expected)
                 self.update_weights(inputs, lrate)
-            print(f">epoch={epoch}, lrate={lrate:.3f}, error={sum_error:.3f}")
+            if epoch % 1000 == 0 or epoch == n_epoch - 1:
+                print(f">epoch={epoch}, lrate={lrate:.3f}, error={sum_error:.6f}")
 
-# Example usage
+    def predict(self, inputs):
+        outputs = self.forward_propagate(inputs)
+        return [round(output) for output in outputs]
+
+
+# === MAIN EXECUTION ===
 if __name__ == "__main__":
-    # Define dataset (simple XOR problem)
-    dataset = [
+    # Base XOR dataset
+    train_data = [
         [0, 0, [0]],
         [0, 1, [1]],
         [1, 0, [1]],
         [1, 1, [0]]
     ]
-    
-    # Create network
-    n_inputs = len(dataset[0]) - 1
-    n_outputs = len(dataset[0][-1])
-    network = SimpleNeuralNetwork(n_inputs, 2, n_outputs)
-    
-    # Train network
-    network.train(dataset, 0.5, 20)
-    
-    # Show final weights
-    for i, layer in enumerate(network.network):
-        print(layer)
 
+    n_inputs = len(train_data[0]) - 1
+    n_outputs = len(train_data[0][-1])
+    model = SimpleNeuralNetwork(n_inputs, 2, n_outputs)
 
+    # Train the model
+    model.train(train_data, lrate=0.1, n_epoch=10000)
 
+    # === Additional Test Dataset (10+ examples) ===
+    test_data = [
+        [0, 1, [1]], [1, 0, [1]], [1, 1, [0]], [0, 0, [0]],
+        [0.1, 0.9, [1]], [0.9, 0.1, [1]], [0.2, 0.2, [0]],
+        [0.5, 0.5, [0]], [0.7, 0.3, [1]], [0.3, 0.7, [1]]
+    ]
 
+    print("\n=== Test Set Evaluation (10+ samples) ===")
+    correct = 0
+    for row in test_data:
+        inputs = row[:-1]
+        expected = row[-1]
+        predicted = model.predict(inputs)
+        is_correct = predicted == expected
+        correct += is_correct
+        print(f"Input={inputs}, Expected={expected}, Predicted={predicted}, Correct={is_correct}")
+    print(f"Test Accuracy: {(correct / len(test_data)) * 100:.2f}%")
 
+    # === User Input for Prediction ===
+    print("\n=== Predict Custom Input (x y) ===")
+    while True:
+        try:
+            user_input = input("Enter inputs (x y) or 'q' to quit: ").strip()
+            if user_input.lower() == 'q':
+                break
+            x, y = map(float, user_input.split())
+            result = model.predict([x, y])
+            print(f"Predicted Output: {result[0]}")
+        except Exception as e:
+            print(f"Invalid input. Try again. ({e})")
 
-OUTPUT
->epoch=0, lrate=0.500, error=1.095
->epoch=1, lrate=0.500, error=1.082
->epoch=2, lrate=0.500, error=1.073
->epoch=3, lrate=0.500, error=1.066
->epoch=4, lrate=0.500, error=1.061
->epoch=5, lrate=0.500, error=1.058
->epoch=6, lrate=0.500, error=1.056
->epoch=7, lrate=0.500, error=1.054
->epoch=8, lrate=0.500, error=1.053
->epoch=9, lrate=0.500, error=1.053
->epoch=10, lrate=0.500, error=1.052
->epoch=11, lrate=0.500, error=1.052
->epoch=12, lrate=0.500, error=1.051
->epoch=13, lrate=0.500, error=1.051
->epoch=14, lrate=0.500, error=1.051
->epoch=15, lrate=0.500, error=1.051
->epoch=16, lrate=0.500, error=1.051
->epoch=17, lrate=0.500, error=1.051
->epoch=18, lrate=0.500, error=1.051
->epoch=19, lrate=0.500, error=1.051
-[{'weights': [0.13986948907131327, 0.15233714312536767, 0.20838343360096148], 'output': 0.6188160843008812, 'delta': 0.010709287822207493}, {'weights': [-0.4727283322999429, -0.6843471553623713, 0.19738094939923834], 'output': 0.2787718951610324, 'delta': -0.006088630330939018}]
-[{'weights': [-0.39565362935678344, 0.21983715978037988, 0.13053057749261232], 'output': 0.5100135479772341, 'delta': -0.12745224735286023}]
+    # === Final Weights Display ===
+    print("\n=== Final Weights ===")
+    for i, layer in enumerate(model.network):
+        print(f"Layer {i+1}:")
+        for j, neuron in enumerate(layer):
+            print(f"  Neuron {j+1} weights: {neuron['weights']}")
