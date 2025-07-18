@@ -107,3 +107,41 @@ if __name__ == "__main__":
 
     print(f"\nVocabulary size: {len(nb.vectorizer.vocabulary_)}")
     print("Sample features:", list(nb.vectorizer.vocabulary_.items())[:10])
+
+
+
+
+OUTPUT
+Sample dataset written to train.csv
+
+=== Model Evaluation Metrics ===
+Accuracy:  1.0000
+Precision: 1.0000
+Recall:    1.0000
+F1 Score:  1.0000
+
+=== Classification Report ===
+              precision    recall  f1-score   support
+
+         ham       1.00      1.00      1.00         1
+        spam       1.00      1.00      1.00         2
+
+    accuracy                           1.00         3
+   macro avg       1.00      1.00      1.00         3
+weighted avg       1.00      1.00      1.00         3
+
+
+=== Confusion Matrix ===
+True Negatives (Ham):         1
+False Positives (Ham→Spam):   0
+False Negatives (Spam→Ham):   0
+True Positives (Spam):        2
+
+=== Test Message Predictions ===
+'Your loan is approved! Call now to claim....' => spam
+'Hi, just checking in to see how you're doing....' => ham
+'Don't miss out on this limited-time offer!...' => ham
+'Are you joining the office call at 2 PM?...' => ham
+
+Vocabulary size: 30
+Sample features: [('hey', np.int64(13)), ('dinner', np.int64(8)), ('tonight', np.int64(24)), ('claim', np.int64(5)), ('free', np.int64(11)), ('ringtone', np.int64(19)), ('texting', np.int64(22)), ('win', np.int64(29)), ('80085', np.int64(2)), ('ll', np.int64(14))]
