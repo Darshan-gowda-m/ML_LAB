@@ -1,24 +1,17 @@
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
 import numpy as np
-
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score,classification_report,confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
 iris=load_iris()
-x,y=iris.data,iris.target;
+x=iris.data
+y=iris.target
 
-x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.25,random_state=42,shuffle=True)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.25,random_state=42)
+knn=KNeighborsClassifier().fit(x_train,y_train)
 
-k=KNeighborsClassifier(n_neighbors=3)
-k.fit(x_train,y_train)
-
-print(f"features={iris.feature_names}\n target={iris.target}\n");
-
-
-y_pred=k.predict(x_test)
-a2=accuracy_score(y_pred,y_test)
-
-print(f"testing accuracy ={a2}\n")
-print(f"predicted={y_pred}\nactual={y_test}\n")
-print(f"total number of misclassified examples are :{sum(p!=t for p,t in zip(y_pred,y_test))}")
-
+print(f"features={iris.feature_names}\ntarget={iris.target}\n")
+y_pred=knn.predict(x_test)
+print(f"predicted is {y_pred}\ntesting data is {y_test}\naccuracy={accuracy_score(y_test,y_pred)}\nconfusion matrix={confusion_matrix(y_test,y_pred)}\nclassification_report={classification_report(y_test,y_pred,target_names=iris.target_names)}")
+print(f"total number of misclassfied is {sum(p!=t for p,t in zip(y_pred,y_test))}")
