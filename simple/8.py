@@ -1,33 +1,24 @@
-
-
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.neighbors import KNeighborsClassifier
+import numpy as np
 
-# === Load Iris dataset ===
-iris = load_iris()
-X, y = iris.data, iris.target
+iris=load_iris()
+x,y=iris.data,iris.target;
 
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, shuffle=True)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.25,random_state=42,shuffle=True)
 
-# Train k-NN
-knn = KNeighborsClassifier(n_neighbors=3)
-knn.fit(X_train, y_train)
+k=KNeighborsClassifier(n_neighbors=3)
+k.fit(x_train,y_train)
 
-# Predictions
-y_pred = knn.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
+print(f"features={iris.feature_names}\n target={iris.target}\n");
 
-# Results
-print(f"Feature Names: {iris.feature_names}")
-print(f"Target Names: {iris.target_names}")
-print(f"\nAccuracy: {accuracy:.2f}")
-print(f"\nPredicted: {y_pred}")
-print(f"Actual:    {y_test}")
 
-# Misclassifications
-result = ["✅ Correct" if p == t else "❌ Wrong" for p, t in zip(y_pred, y_test)]
-print("\nResult:", result)
-print(f"Total misclassified samples: {sum(p != t for p, t in zip(y_pred, y_test))}")
+y_pred=k.predict(x_test)
+a2=accuracy_score(y_pred,y_test)
+
+print(f"testing accuracy ={a2}\n")
+print(f"predicted={y_pred}\nactual={y_test}\n")
+print(f"total number of misclassified examples are :{sum(p!=t for p,t in zip(y_pred,y_test))}")
+
